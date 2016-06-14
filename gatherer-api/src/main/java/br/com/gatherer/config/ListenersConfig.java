@@ -6,34 +6,27 @@ import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.listener.ConditionalRejectingErrorHandler;
 import org.springframework.amqp.rabbit.listener.SimpleMessageListenerContainer;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.Environment;
 
 import br.com.gatherer.handler.DefaultFatalExceptionStrategy;
 import br.com.gatherer.listener.DefaultMessageListener;
 
 @Configuration
+@PropertySource("file:${app.home}/conf/loader.properties")
 public class ListenersConfig {
 
-	// AMQP properties
-	private @Value("${amqp.hostname}") String hostname;
-	private @Value("${amqp.vhost}") String vhost;
-	private @Value("${amqp.username}") String username;
-	private @Value("${amqp.password}") String password;
-	private @Value("${amqp.queue.measures}") String measures;
-	private @Value("${amqp.queue.activities}") String activities;
-
-	// REST API properties
-	private @Value("${api.uri}") String apiUri;
-	private @Value("${api.endpoint.activities}") String activitiesEndpoint;
-	private @Value("${api.endpoint.measures}") String measuresEndpoint;
-
+	@Autowired
+	Environment env;
+	
 	@Bean
 	public SimpleMessageListenerContainer measuresListenerContainer() {
 		SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
 		container.setConnectionFactory(connectionFactory());
-		container.setQueueNames(measures);
+		container.setQueueNames(env.getProperty("amqp.queue.measures"));
 		container.setMessageListener(measuresListener());
 		container.setAcknowledgeMode(AcknowledgeMode.AUTO);
 		container.setErrorHandler(new ConditionalRejectingErrorHandler(new DefaultFatalExceptionStrategy()));
@@ -44,7 +37,7 @@ public class ListenersConfig {
 	public SimpleMessageListenerContainer activitiesListenerContainer() {
 		SimpleMessageListenerContainer container = new SimpleMessageListenerContainer();
 		container.setConnectionFactory(connectionFactory());
-		container.setQueueNames(activities);
+		container.setQueueNames(env.getProperty("amqp.queue.activities"));
 		container.setMessageListener(activitiesListener());
 		container.setAcknowledgeMode(AcknowledgeMode.AUTO);
 		container.setErrorHandler(new ConditionalRejectingErrorHandler(new DefaultFatalExceptionStrategy()));
@@ -53,19 +46,20 @@ public class ListenersConfig {
 
 	@Bean
 	public ConnectionFactory connectionFactory() {
-		CachingConnectionFactory connectionFactory = new CachingConnectionFactory(hostname);
-		connectionFactory.setUsername(username);
-		connectionFactory.setPassword(password);
-		connectionFactory.setVirtualHost(vhost);
+		CachingConnectionFactory connectionFactory = new CachingConnectionFactory(env.getProperty("amqp.hostname"));
+		connectionFactory.setUsername(env.getProperty("amqp.username"));
+		connectionFactory.setPassword(env.getProperty("amqp.password"));
+		connectionFactory.setVirtualHost(env.getProperty("amqp.vhost"));
 		return connectionFactory;
 	}
 
+	@Bean
 	public MessageListener measuresListener() {
-		return new DefaultMessageListener(apiUri, measuresEndpoint);
+		return new DefaultMessageListener(env.getProperty("api.uri"), env.getProperty("api.endpoint.measures"));
 	}
 
 	@Bean
 	public MessageListener activitiesListener() {
-		return new DefaultMessageListener(apiUri, activitiesEndpoint);
+		return new DefaultMessageListener(env.getProperty("api.uri"), env.getProperty("api.endpoint.activities"));
 	}
 }
