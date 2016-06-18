@@ -1,5 +1,7 @@
 package br.com.gatherer.config;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.amqp.core.AcknowledgeMode;
 import org.springframework.amqp.core.MessageListener;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
@@ -21,6 +23,8 @@ public class ListenersConfig {
 
 	@Autowired
 	Environment env;
+	
+	private static final Logger LOGGER = LoggerFactory.getLogger(ListenersConfig.class);
 	
 	@Bean
 	public SimpleMessageListenerContainer measuresListenerContainer() {
@@ -46,10 +50,16 @@ public class ListenersConfig {
 
 	@Bean
 	public ConnectionFactory connectionFactory() {
+		LOGGER.info("Creating RabbitMQ connection factory...");
+		LOGGER.info("amqp.hostname >>> " + env.getProperty("amqp.hostname"));
+		LOGGER.info("amqp.vhost >>> " + env.getProperty("amqp.vhost"));
+		LOGGER.info("amqp.username >>> " + env.getProperty("amqp.username"));
+		LOGGER.info("amqp.password >>> " + env.getProperty("amqp.password"));
 		CachingConnectionFactory connectionFactory = new CachingConnectionFactory(env.getProperty("amqp.hostname"));
 		connectionFactory.setUsername(env.getProperty("amqp.username"));
 		connectionFactory.setPassword(env.getProperty("amqp.password"));
 		connectionFactory.setVirtualHost(env.getProperty("amqp.vhost"));
+		connectionFactory.setHost(env.getProperty("amqp.hostname"));
 		return connectionFactory;
 	}
 
