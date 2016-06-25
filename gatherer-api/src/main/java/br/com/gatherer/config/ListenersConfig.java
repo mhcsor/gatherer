@@ -50,11 +50,6 @@ public class ListenersConfig {
 
 	@Bean
 	public ConnectionFactory connectionFactory() {
-		LOGGER.info("Creating RabbitMQ connection factory...");
-		LOGGER.info("amqp.hostname >>> " + env.getProperty("amqp.hostname"));
-		LOGGER.info("amqp.vhost >>> " + env.getProperty("amqp.vhost"));
-		LOGGER.info("amqp.username >>> " + env.getProperty("amqp.username"));
-		LOGGER.info("amqp.password >>> " + env.getProperty("amqp.password"));
 		CachingConnectionFactory connectionFactory = new CachingConnectionFactory(env.getProperty("amqp.hostname"));
 		connectionFactory.setUsername(env.getProperty("amqp.username"));
 		connectionFactory.setPassword(env.getProperty("amqp.password"));
